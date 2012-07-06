@@ -47,6 +47,10 @@ char const*const GREEN_BLINK_FILE = "/sys/class/leds/green/blink";
 
 char const*const LCD_BACKLIGHT_FILE = "/sys/class/leds/lcd-backlight/brightness";
 
+char const*const KEYBOARD_FILE
+        = "/sys/class/leds/keyboard-backlight/brightness";
+
+
 enum {
 	LED_BLANK,
 	LED_AMBER,
@@ -203,6 +207,18 @@ static void handle_speaker_battery_locked (struct light_device_t *dev) {
 	}
 }
 
+static int set_light_keyboard(struct light_device_t* dev,
+        struct light_state_t const* state)
+{
+    int err = 0;
+    int on = is_lit(state);
+    pthread_mutex_lock(&g_lock);
+    err = write_int(KEYBOARD_FILE, on?255:0);
+    pthread_mutex_unlock(&g_lock);
+    return err;
+}
+
+
 static int set_light_buttons (struct light_device_t* dev,
 		struct light_state_t const* state) {
 	int err = 0;
@@ -276,6 +292,9 @@ static int open_lights (const struct hw_module_t* module, char const* name,
 	if (0 == strcmp(LIGHT_ID_BACKLIGHT, name)) {
         	set_light = set_light_backlight;
 	}
+	else if (0 == strcmp(LIGHT_ID_KEYBOARD, name)) {
+        set_light = set_light_keyboard;
+  }
 	else if (0 == strcmp(LIGHT_ID_BUTTONS, name)) {
 		set_light = set_light_buttons;
 	}
